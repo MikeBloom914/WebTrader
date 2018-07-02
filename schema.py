@@ -2,15 +2,14 @@
 
 import sqlite3
 
-
 connection = sqlite3.connect('master.db', check_same_thread=False)
-cursor     = connection.cursor()
+cursor = connection.cursor()
 
 cursor.execute(
     """CREATE TABLE users(
         pk INTEGER PRIMARY KEY AUTOINCREMENT,
-        email VARCHAR,
-        password VARCHAR,
+        email VARCHAR(32),
+        password VARCHAR(32),
         balance FLOAT
     );"""
 )
