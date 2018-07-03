@@ -7,7 +7,38 @@ import requests
 import os
 
 
-def buy(ticker_symbol, trade_volume):
+def registration(firstname, lastname, username, password, balance):
+    connection = sqlite3.connect('master.db', check_same_thread=False)
+    cursor = connection.cursor()
+    print(firstname, lastname, username, password, balance)
+    # cursor.execute('SELECT firstname, lastname, username, password, balance FROM users WHERE pk=?;', (guid,))
+    # username ='{username}';""".format(username=username))
+    # exists = cursor.fetchall()
+
+    # if exists is None:
+    if True:
+        cursor.execute("""INSERT INTO users(
+                            firstname,
+                            lastname,
+                            username,
+                            password,
+                            balance
+                        ) VALUES(
+                        "{firstname}",
+                        "{lastname}",
+                        "{username}",
+                        "{password}",
+                        {balance});""".format(firstname=firstname, lastname=lastname, username=username, password=password, balance=float(balance)))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return 'You have successfully registered'
+
+    else:
+        return 'This username is already being used, Please choose another one'
+
+
+def buy(ticker_symbol, trade_volume, guid):
 
     deep_link = 'http://dev.markitondemand.com/MODApis/Api/v2/Quote/json?symbol={ticker_symbol}'.format(ticker_symbol=ticker_symbol)
     response = json.loads(requests.get(deep_link).text)
@@ -17,7 +48,7 @@ def buy(ticker_symbol, trade_volume):
 
     last_price = response['LastPrice']
 
-    cursor.execute('SELECT balance FROM users;')
+    cursor.execute('SELECT balance FROM users WHERE pk=?;', (guid,))
     balance = cursor.fetchall()[0][0]
 
     friction = 12.00  # Amount of money it costs to make a trade per trade
@@ -33,7 +64,7 @@ def buy(ticker_symbol, trade_volume):
         cursor.execute('UPDATE users SET balance = {new_balance};'.format(new_balance=new_balance))
         connection.commit()
 
-        cursor.execute('INSERT INTO transactions(unix_time, ticker_symbol, transaction_type, last_price, trade_volume) VALUES({0}, "{1}", {2}, {3}, {4});'.format(unix_time, ticker_symbol, transaction_type, last_price, int(trade_volume)))
+        cursor.execute('INSERT INTO transactions(unix_time, ticker_symbol, transaction_type, last_price, trade_volume, fk) VALUES({0}, "{1}", {2}, {3}, {4}, {5});'.format(unix_time, ticker_symbol, transaction_type, last_price, int(trade_volume), guid))
         connection.commit()
 
         cursor.execute('SELECT ticker_symbol FROM positions WHERE ticker_symbol = "{ticker_symbol}";'.format(ticker_symbol=ticker_symbol))
@@ -64,7 +95,7 @@ def buy(ticker_symbol, trade_volume):
         return 'Trade is complete. You paid {last_price} on {trade_volume} shares of {ticker_symbol}'.format(last_price=last_price, trade_volume=trade_volume, ticker_symbol=ticker_symbol.upper())
 
 
-def sell(ticker_symbol, trade_volume):
+def sell(ticker_symbol, trade_volume, guid):
 
     deep_link = 'http://dev.markitondemand.com/MODApis/Api/v2/Quote/json?symbol={ticker_symbol}'.format(ticker_symbol=ticker_symbol)
     response = json.loads(requests.get(deep_link).text)
@@ -74,7 +105,7 @@ def sell(ticker_symbol, trade_volume):
 
     last_price = response['LastPrice']
 
-    cursor.execute('SELECT balance FROM users;')
+    cursor.execute('SELECT balance FROM users WHERE pk=?;', (guid,))
     balance = cursor.fetchall()[0][0]
 
     friction = 12.00  # Amount of money it costs to make a trade per trade
@@ -99,7 +130,7 @@ def sell(ticker_symbol, trade_volume):
         new_holdings = current_holdings - int(trade_volume)
         # new_holdings and current_holdings are correct
 
-        cursor.execute('INSERT INTO transactions(unix_time, ticker_symbol, transaction_type, last_price, trade_volume) VALUES({0}, "{1}", {2}, {3}, {4});'.format(unix_time, ticker_symbol, transaction_type, last_price, int(trade_volume)))
+        cursor.execute('INSERT INTO transactions(unix_time, ticker_symbol, transaction_type, last_price, trade_volume, fk) VALUES({0}, "{1}", {2}, {3}, {4}, {5});'.format(unix_time, ticker_symbol, transaction_type, last_price, int(trade_volume), guid))
         connection.commit()
 
         cursor.execute('SELECT ticker_symbol FROM positions WHERE ticker_symbol = "{ticker_symbol}";'.format(ticker_symbol=ticker_symbol))
@@ -150,47 +181,69 @@ def quote(ticker_symbol):
     return 'The last trade price for {ticker_symbol} is {last_price}'.format(ticker_symbol=ticker_symbol.upper(), last_price=last_price)
 
 
-def portfolio():
+def portfolio(guid):
     connection = sqlite3.connect('master.db', check_same_thread=False)
     cursor = connection.cursor()
 
-    cursor.execute('SELECT balance FROM users;')
+    cursor.execute('SELECT balance FROM users WHERE pk=?;', (guid,))
     balance = cursor.fetchall()[0][0]
 
-    cursor.execute('SELECT ticker_symbol,number_of_shares,vwap FROM positions;')
+    cursor.execute('SELECT ticker_symbol,number_of_shares,vwap FROM positions WHERE pk=?;', (guid,))
     trades = cursor.fetchall()
+
+    return 'Your current balance is ${balance} and your current positions are: {trades}'.format(balance=round(balance, 2), trades=trades)
 
     cursor.close()
     connection.close()
 
-    return 'Your current balance is ${balance}'.format(balance=round(balance, 2))
-    # return 'Your current balance is ${balance} and your current positions are: {trades}'.format(balance=round(balance, 2), trades=trades)
 
-
-def pl():
+def pl(guid):
 
     connection = sqlite3.connect('master.db', check_same_thread=False)
     cursor = connection.cursor()
 
     start = 100000
 
-    cursor.execute('SELECT SUM(vwap) FROM positions;')
-    svwap = cursor.fetchall()[0][0]
+    cursor.execute('SELECT SUM(vwap) FROM positions WHERE pk=?;', (guid,))
+    svwap = ''
+    xa = cursor.fetchall()
+    if xa[0][0] != None:
+        svwap = xa[0][0]
+    else:
+        return 'Your p/l is flat'
+    # print(svwap)
+        # print(xa)
 
-    cursor.execute('SELECT SUM(number_of_shares) FROM positions;')
-    sshar = cursor.fetchall()[0][0]
+    cursor.execute('SELECT SUM(number_of_shares) FROM positions WHERE pk=?;', (guid,))
+    sshar = ''
+    xa = cursor.fetchall()
+    if xa[0][0] != None:
+        sshar = xa[0][0]
+    else:
+        return 'Your p/l is flat'
+    # sshar = cursor.fetchall()[0][0]
+        # print(sshar)
+        print(svwap, sshar)
 
-    cursor.execute('SELECT balance FROM users;')
+    cursor.execute('SELECT balance FROM users WHERE pk=?;', (guid,))
     balance = cursor.fetchall()[0][0]
 
-    pl = (svwap * sshar)
-    pl2 = start - balance
-    finpl = pl - pl2
+    #print(svwap, sshar)
 
-    if float(finpl) == float(0):
-        return 'Your p/l is flat'
-    else:
-        return round(finpl, 2)
+    pl1 = (svwap * sshar)
+    pl2 = start - balance
+    finpl = pl1 - pl2
+
+    # if isinstance(pl1, float):
+    #     return round(finpl, 2)
+
+    # else:
+    #     return 'Your p/l is flat'
+
+    # if float(finpl) == float(0) or finpl == 0:
+    #     return 'Your p/l is flat'
+    # else:
+    #     return round(finpl, 2)
 
     # cursor.execute('SELECT count(*) FROM transactions;')
     # trans = cursor.fetchall()[0][0]

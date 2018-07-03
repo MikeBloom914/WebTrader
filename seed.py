@@ -8,11 +8,15 @@ cursor = connection.cursor()
 
 cursor.execute(
     """INSERT INTO users(
-        email,
+        firstname,
+        lastname,
+        username,
         password,
         balance
     ) VALUES(
-        'mikebloom914@gmail.com',
+        'firstname',
+        'lastname',
+        'Shecky914',
         'swordfish',
         100000.00
     );"""

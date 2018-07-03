@@ -2,12 +2,13 @@
 
 import time
 
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, redirect, render_template, request, session, url_for
 
 import model
 
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret'
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -15,13 +16,44 @@ def login():
     if request.method == 'GET':
         return render_template('login.html')
     else:
-        email = request.form['email']
-        password = request.form['password']
+        submitted_username = request.form['username']
+        submitted_password = request.form['password']
+        if submitted_username and submitted_password:
+            import sqlite3
+            connection = sqlite3.connect('master.db', check_same_thread=False)
+            cursor = connection.cursor()
+            cursor.execute('SELECT username FROM users WHERE username=?;', (submitted_username,))
+            objectified_username = cursor.fetchall()
+            if len(objectified_username) == 0:
+                return render_template('login.html', message='BAD CREDENTIALS...Please try again')
 
-        if email != 'mikebloom914@gmail.com' or password != 'swordfish':
-            return render_template('login.html', message='BAD CREDENTIALS...Please try again')
-        else:
-            return redirect(url_for('homepage'))
+            else:
+                objectified_username = objectified_username[0][0]
+                cursor.execute('SELECT password FROM users WHERE username=?;', (submitted_username,))
+                objectified_password = cursor.fetchall()[0][0]
+                if submitted_password == objectified_password:
+                    import sqlite3
+                    connection = sqlite3.connect('master.db', check_same_thread=False)
+                    cursor = connection.cursor()
+                    cursor.execute('SELECT pk FROM users WHERE username=?;', (submitted_username,))
+                    session['guid'] = cursor.fetchall()[0][0]
+                    return redirect(url_for('homepage'))
+                else:
+                    return render_template('login.html', message='BAD CREDENTIALS...Please try again')
+
+
+@app.route('/registration', methods=['GET', 'POST'])
+def registration():
+    if request.method == 'GET':
+        return render_template('registration.html')
+    else:
+        firstname = request.form['firstname']
+        lastname = request.form['lastname']
+        username = request.form['username']
+        password = request.form['password']
+        balance = float(100000)
+        x = model.registration(firstname, lastname, username, password, balance)
+        return render_template('login.html')
 
 
 @app.route('/homepage', methods=['GET', 'POST'])
@@ -39,7 +71,7 @@ def buy():
     else:
         ticker_symbol = request.form['thingone']
         trade_volume = request.form['thingtwo']
-        x = model.buy(ticker_symbol, trade_volume)
+        x = model.buy(ticker_symbol, trade_volume, session['guid'])
         return render_template('buy.html', message=x)
 
 
@@ -50,7 +82,7 @@ def sell():
     else:
         ticker_symbol = request.form['sellone']
         trade_volume = request.form['selltwo']
-        x = model.sell(ticker_symbol, trade_volume)
+        x = model.sell(ticker_symbol, trade_volume, session['guid'])
         return render_template('sell.html', message=x)
 
 
@@ -76,13 +108,13 @@ def quote():
 
 @app.route('/portfolio', methods=['GET'])
 def portfolio():
-    x = model.portfolio()
+    x = model.portfolio(session['guid'])
     return render_template('portfolio.html', message=x)
 
 
 @app.route('/pl', methods=['GET'])
 def pl():
-    x = model.pl()
+    x = model.pl(session['guid'])
     return render_template('pl.html', message=x)
 
 

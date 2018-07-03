@@ -2,7 +2,7 @@
 
 rm master.db
 python3 schema.py
-python3 seed.py
+#python3 seed.py
 python3 webcontroller.py
 
 

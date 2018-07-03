@@ -8,7 +8,9 @@ cursor = connection.cursor()
 cursor.execute(
     """CREATE TABLE users(
         pk INTEGER PRIMARY KEY AUTOINCREMENT,
-        email VARCHAR(32),
+        firstname VARCHAR(32),
+        lastname VARCHAR(32),
+        username VARCHAR(32),
         password VARCHAR(32),
         balance FLOAT
     );"""
@@ -26,11 +28,13 @@ cursor.execute(
 cursor.execute(
     """CREATE TABLE transactions(
         pk INTEGER PRIMARY KEY AUTOINCREMENT,
+        fk INTEGER,
         unix_time FLOAT,
         transaction_type BOOL,
         last_price FLOAT,
         trade_volume INTEGER,
-        ticker_symbol VARCHAR
+        ticker_symbol VARCHAR,
+        FOREIGN KEY(fk) REFERENCES users(pk)
     );"""
 )
 
