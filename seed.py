@@ -10,7 +10,7 @@ cursor.execute(
     """INSERT INTO users(
         firstname,
         lastname,
-        username,
+        email,
         password,
         balance
     ) VALUES(

@@ -16,26 +16,26 @@ def login():
     if request.method == 'GET':
         return render_template('login.html')
     else:
-        submitted_username = request.form['username']
+        submitted_email = request.form['email']
         submitted_password = request.form['password']
-        if submitted_username and submitted_password:
+        if submitted_email and submitted_password:
             import sqlite3
             connection = sqlite3.connect('master.db', check_same_thread=False)
             cursor = connection.cursor()
-            cursor.execute('SELECT username FROM users WHERE username=?;', (submitted_username,))
-            objectified_username = cursor.fetchall()
-            if len(objectified_username) == 0:
-                return render_template('login.html', message='BAD CREDENTIALS...Please try again')
+            cursor.execute('SELECT email FROM users WHERE email=?;', (submitted_email,))
+            objectified_email = cursor.fetchall()
+            if len(objectified_email) == 0:
+                return render_template('login.html', message='BAD CREDENTIALS...Please try again...If you are a new user please register')
 
             else:
-                objectified_username = objectified_username[0][0]
-                cursor.execute('SELECT password FROM users WHERE username=?;', (submitted_username,))
+                objectified_email = objectified_email[0][0]
+                cursor.execute('SELECT password FROM users WHERE email=?;', (submitted_email,))
                 objectified_password = cursor.fetchall()[0][0]
                 if submitted_password == objectified_password:
                     import sqlite3
                     connection = sqlite3.connect('master.db', check_same_thread=False)
                     cursor = connection.cursor()
-                    cursor.execute('SELECT pk FROM users WHERE username=?;', (submitted_username,))
+                    cursor.execute('SELECT pk FROM users WHERE email=?;', (submitted_email,))
                     session['guid'] = cursor.fetchall()[0][0]
                     return redirect(url_for('homepage'))
                 else:
@@ -49,10 +49,10 @@ def registration():
     else:
         firstname = request.form['firstname']
         lastname = request.form['lastname']
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
         balance = float(100000)
-        x = model.registration(firstname, lastname, username, password, balance)
+        x = model.registration(firstname, lastname, email, password, balance)
         return render_template('login.html')
 
 
@@ -119,4 +119,4 @@ def pl():
 
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5500, debug=True)
+    app.run(host='127.0.0.1', port=6000, debug=True)

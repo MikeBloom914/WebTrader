@@ -7,12 +7,12 @@ import requests
 import os
 
 
-def registration(firstname, lastname, username, password, balance):
+def registration(firstname, lastname, email, password, balance):
     connection = sqlite3.connect('master.db', check_same_thread=False)
     cursor = connection.cursor()
-    print(firstname, lastname, username, password, balance)
-    # cursor.execute('SELECT firstname, lastname, username, password, balance FROM users WHERE pk=?;', (guid,))
-    # username ='{username}';""".format(username=username))
+    print(firstname, lastname, email, password, balance)
+    # cursor.execute('SELECT firstname, lastname, email, password, balance FROM users WHERE pk=?;', (guid,))
+    # email ='{email}';""".format(email=email))
     # exists = cursor.fetchall()
 
     # if exists is None:
@@ -20,22 +20,22 @@ def registration(firstname, lastname, username, password, balance):
         cursor.execute("""INSERT INTO users(
                             firstname,
                             lastname,
-                            username,
+                            email,
                             password,
                             balance
                         ) VALUES(
                         "{firstname}",
                         "{lastname}",
-                        "{username}",
+                        "{email}",
                         "{password}",
-                        {balance});""".format(firstname=firstname, lastname=lastname, username=username, password=password, balance=float(balance)))
+                        {balance});""".format(firstname=firstname, lastname=lastname, email=email, password=password, balance=float(balance)))
         connection.commit()
         cursor.close()
         connection.close()
         return 'You have successfully registered'
 
     else:
-        return 'This username is already being used, Please choose another one'
+        return 'This email is already being used, Please choose another one'
 
 
 def buy(ticker_symbol, trade_volume, guid):
