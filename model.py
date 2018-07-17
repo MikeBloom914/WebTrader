@@ -165,6 +165,8 @@ def sell(ticker_symbol, trade_volume, guid):
 
         return 'Trade is complete. You sold {trade_volume} shares of {ticker_symbol} at {last_price}'.format(trade_volume=trade_volume, ticker_symbol=ticker_symbol.upper(), last_price=last_price)
 
+    
+    
 
 def lookup(company_name):
     deep_link = 'http://dev.markitondemand.com/MODApis/Api/v2/Lookup/json?input={company_name}'.format(company_name=company_name)
@@ -173,12 +175,16 @@ def lookup(company_name):
     return 'The ticker symbol for {company_name} is: '.format(company_name=company_name) + ticker_symbol
 
 
+
+
 def quote(ticker_symbol):
     deep_link = 'http://dev.markitondemand.com/MODApis/Api/v2/Quote/json?symbol={ticker_symbol}'.format(ticker_symbol=ticker_symbol)
     response = json.loads(requests.get(deep_link).text)
     last_price = response['LastPrice']
 
     return 'The last trade price for {ticker_symbol} is {last_price}'.format(ticker_symbol=ticker_symbol.upper(), last_price=last_price)
+
+
 
 
 def portfolio(guid):
@@ -197,6 +203,8 @@ def portfolio(guid):
     connection.close()
 
 
+    
+    
 def pl(guid):
 
     connection = sqlite3.connect('master.db', check_same_thread=False)
